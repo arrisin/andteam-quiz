@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#101114" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="&TEAM 猜歌" />
+  <link rel="manifest" href="manifest.webmanifest">
+  <title>&TEAM 一秒入耳</title>
+  <style>
+    :root{
+      --bg:#0d0f13;--card:#171a21;--card2:#20242d;--text:#f7f7f8;
+      --muted:#a7adba;--line:#2b303b;--accent:#f4f4f5;--dark:#111318;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:var(--text);
+      font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI","Noto Sans TC",sans-serif}
+    body{min-height:100dvh;padding:max(18px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom))}
+    .wrap{width:min(620px,100%);margin:auto}
+    .hero{padding:10px 4px 18px}
+    h1{font-size:30px;margin:0 0 6px;letter-spacing:-.03em}
+    .sub{color:var(--muted);font-size:14px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:16px;margin-bottom:14px}
+    .controls{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    button,select{
+      width:100%;border:1px solid var(--line);background:var(--card2);color:var(--text);
+      border-radius:16px;padding:14px 15px;font-size:16px;font-weight:600;
+      -webkit-tap-highlight-color:transparent;
+    }
+    button.primary{background:var(--accent);color:var(--dark)}
+    button:disabled{opacity:.4}
+    .big{font-size:18px;padding:17px}
+    .status{color:var(--muted);line-height:1.55;min-height:48px}
+    .answer{display:none}
+    .answer.show{display:block}
+    .answerRow{display:flex;gap:14px;align-items:center}
+    .cover{width:96px;height:96px;object-fit:cover;border-radius:16px;background:#2a2e36}
+    .song{font-size:22px;font-weight:800;line-height:1.2}
+    .artist,.album{color:var(--muted);font-size:14px;margin-top:4px}
+    .pill{display:inline-block;margin-top:10px;padding:6px 9px;border-radius:999px;background:#242933;color:#c9ced8;font-size:12px}
+    .tiny{font-size:12px;color:var(--muted);line-height:1.55}
+    .hidden{display:none}
+    .link{color:inherit;text-decoration:none}
+    .install{font-size:13px;color:var(--muted)}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <section class="hero">
+    <h1>&TEAM 一秒入耳 🎧</h1>
+    <div class="sub">隨機播一小段，刷到你全部認得為止（笑）</div>
+  </section>
+
+  <section class="card">
+    <div class="controls">
+      <button id="loadBtn" class="primary">載入 &TEAM 歌曲</button>
+      <select id="duration">
+        <option value="0.5">0.5 秒・地獄</option>
+        <option value="1" selected>1 秒</option>
+        <option value="2">2 秒</option>
+        <option value="3">3 秒</option>
+      </select>
+    </div>
+    <div id="status" class="status" style="margin-top:14px">第一次先按「載入 &TEAM 歌曲」🥹</div>
+  </section>
+
+  <section class="card">
+    <div class="controls">
+      <button id="playBtn" class="big" disabled>▶︎ 播放片段</button>
+      <button id="answerBtn" class="big" disabled>👀 看答案</button>
+    </div>
+    <button id="nextBtn" class="primary big" style="margin-top:10px" disabled>下一題 ↻</button>
+  </section>
+
+  <section id="answer" class="card answer">
+    <div class="answerRow">
+      <img id="cover" class="cover" alt="">
+      <div>
+        <div id="song" class="song"></div>
+        <div id="artist" class="artist"></div>
+        <div id="album" class="album"></div>
+        <span class="pill">Apple 官方試聽</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="install">
+      📱 iPhone：用 Safari 打開這個網站 → 分享 →「加入主畫面」，之後就會像 App 一樣直接點開。
+    </div>
+  </section>
+
+  <div class="tiny">
+    使用 Apple/iTunes 日本區公開的官方試聽片段。網站不儲存歌曲音檔。不同歌曲是否有試聽片段由 Apple 搜尋結果決定。
+  </div>
+
+  <audio id="audio" preload="metadata"></audio>
+</div>
+
+<script>
+const $ = (id)=>document.getElementById(id);
+const audio = $("audio");
+let songs=[], current=null, lastId=null, timer=null;
+
+function status(t){$("status").textContent=t}
+function stop(){if(timer)clearTimeout(timer);timer=null;audio.pause()}
+
+function jsonp(url){
+  return new Promise((resolve,reject)=>{
+    const cb="cb_"+Math.random().toString(36).slice(2);
+    const s=document.createElement("script");
+    const timeout=setTimeout(()=>done(new Error("連線逾時")),15000);
+    function done(err,data){
+      clearTimeout(timeout);
+      try{delete window[cb]}catch(e){}
+      s.remove();
+      err?reject(err):resolve(data);
+    }
+    window[cb]=(data)=>done(null,data);
+    s.onerror=()=>done(new Error("Apple 搜尋服務無法連線"));
+    s.src=url+(url.includes("?")?"&":"?")+"callback="+cb;
+    document.body.appendChild(s);
+  });
+}
+
+async function loadSongs(){
+  $("loadBtn").disabled=true;
+  status("正在抓 Apple 日本區的 &TEAM 試聽…");
+  try{
+    const appleUrl="https://itunes.apple.com/search?term=%26TEAM&country=JP&media=music&entity=song&attribute=artistTerm&limit=200&lang=ja_jp";
+    let data;
+
+    // GitHub Pages / Safari 有時會擋 Apple Search API 的跨站請求。
+    // 先透過公開 CORS relay 讀 JSON；失敗時再退回 Apple 官方 JSONP。
+    try{
+      const proxyUrl="https://proxy.cors.dev/" + appleUrl;
+      const r=await fetch(proxyUrl,{cache:"no-store"});
+      if(!r.ok) throw new Error("proxy " + r.status);
+      data=await r.json();
+    }catch(proxyError){
+      data=await jsonp(appleUrl);
+    }
+
+    let list=(data.results||[]).filter(x=>
+      x.kind==="song" && x.previewUrl &&
+      typeof x.artistName==="string" &&
+      x.artistName.toUpperCase().includes("&TEAM")
+    );
+
+    const map=new Map();
+    for(const x of list){
+      const key=(x.trackName||"").trim().toLowerCase();
+      if(!map.has(key)) map.set(key,x);
+    }
+    songs=[...map.values()];
+
+    if(!songs.length) throw new Error("沒有抓到可播放的 &TEAM 試聽片段");
+    status(`載入完成：${songs.length} 首。可以開始了 ✨`);
+    $("nextBtn").disabled=false;
+    nextSong();
+  }catch(e){
+    status("載入失敗：Apple 搜尋目前連不上。");
+  }finally{
+    $("loadBtn").disabled=false;
+  }
+}
+
+function nextSong(){
+  stop();
+  $("answer").classList.remove("show");
+  if(!songs.length)return;
+  let opts=songs.filter(x=>x.trackId!==lastId);
+  if(!opts.length)opts=songs;
+  current=opts[Math.floor(Math.random()*opts.length)];
+  lastId=current.trackId;
+  audio.src=current.previewUrl;
+  audio.load();
+  $("playBtn").disabled=false;
+  $("answerBtn").disabled=false;
+  status("題目準備好了。按播放 👀");
+}
+
+async function playClip(){
+  if(!current)return;
+  stop();
+  const sec=Number($("duration").value);
+  try{
+    if(!Number.isFinite(audio.duration)){
+      await new Promise((resolve,reject)=>{
+        const ok=()=>{clean();resolve()};
+        const bad=()=>{clean();reject(new Error("音訊載入失敗"))};
+        const clean=()=>{
+          audio.removeEventListener("loadedmetadata",ok);
+          audio.removeEventListener("error",bad);
+        };
+        audio.addEventListener("loadedmetadata",ok,{once:true});
+        audio.addEventListener("error",bad,{once:true});
+      });
+    }
+    const dur=audio.duration||30;
+    const max=Math.max(0,dur-sec-.3);
+    audio.currentTime=Math.random()*max;
+    await audio.play();
+    status(`播放 ${sec} 秒…`);
+    timer=setTimeout(()=>{
+      audio.pause();
+      status("猜到了嗎 😎");
+    },sec*1000);
+  }catch(e){
+    status("播放失敗：" + e.message);
+  }
+}
+
+function showAnswer(){
+  if(!current)return;
+  $("song").textContent=current.trackName||"";
+  $("artist").textContent=current.artistName||"&TEAM";
+  $("album").textContent=current.collectionName||"";
+  $("cover").src=(current.artworkUrl100||"").replace("100x100bb","300x300bb");
+  $("answer").classList.add("show");
+}
+
+$("loadBtn").addEventListener("click",loadSongs);
+$("nextBtn").addEventListener("click",nextSong);
+$("playBtn").addEventListener("click",playClip);
+$("answerBtn").addEventListener("click",showAnswer);
+window.addEventListener("beforeunload",stop);
+
+// 註冊 service worker（只有在 https/localhost 時才會啟用）
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  navigator.serviceWorker.register("./sw.js").catch(()=>{});
+}
+</script>
+</body>
+</html>
