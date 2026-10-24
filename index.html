@@ -1,0 +1,91 @@
+<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#f5f1fa"><title>猜歌練習機 🎧</title><style>
+:root{color-scheme:light;--bg:#f5f1fa;--surface:#fffdfd;--text:#45374f;--muted:#81758d;--line:#e8ddec;--accent:#9778bc;--accent-deep:#76549f;--tint:#f0e9f8;--shadow:0 8px 28px rgba(98,69,129,.06)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font:15px -apple-system,BlinkMacSystemFont,"Noto Sans TC",sans-serif;padding:16px 13px calc(35px + env(safe-area-inset-bottom))}.wrap{max-width:530px;margin:auto}h1{font-size:24px;margin:0}.subtitle{color:var(--muted);font-size:12px;margin:4px 0 12px}.card{background:var(--surface);border:1px solid var(--line);padding:15px;border-radius:20px;margin-bottom:11px;box-shadow:var(--shadow)}button,input{font:inherit;border-radius:11px}button{padding:11px 10px;border:1px solid transparent;background:var(--tint);color:var(--text);font-weight:650;cursor:pointer;touch-action:manipulation}button:disabled{opacity:.4}button.primary{background:var(--accent);color:white}button.secondary{background:var(--tint);color:var(--accent-deep)}button.mini{padding:7px;font-size:12px}input[type=text],input[type=url],input:not([type]){width:100%;background:white;color:var(--text);border:1px solid #ded0e8;padding:12px;font-size:16px}.row{display:flex;gap:8px}.row>*{flex:1;min-width:0}.muted{color:var(--muted)}.small{font-size:12px}.status{font-size:12px;line-height:1.55;margin:7px 0 0}.progress{height:6px;border-radius:20px;background:#eee8f3;overflow:hidden;margin:10px 0}.progress>div{height:100%;width:10%;background:var(--accent);transition:width .2s}.large{font-size:25px;font-weight:800;text-align:center;margin:2px 0}.choices{display:grid;gap:5px;max-height:160px;overflow:auto;margin-top:6px}.choices:empty{display:none}.choice{width:100%;text-align:left;font-size:13px;padding:10px;background:#f7f3fa;border:1px solid #e4d6eb}.choice.selected{background:#e7d9f2;border-color:var(--accent)}.answer{border-top:1px solid var(--line);padding-top:13px;margin-top:12px;text-align:center}.answer img{display:block;width:clamp(120px,42vw,175px);height:clamp(120px,42vw,175px);object-fit:cover;border-radius:15px;margin:0 auto 10px;box-shadow:0 6px 17px #b39dc844}.answer:after{display:none}.reveal-card{padding:15px;animation:appear .18s ease-out}.reveal-card .answer{border-top:0;margin-top:0;padding-top:0}.reveal-card .answer img{width:clamp(125px,40vw,185px);height:clamp(125px,40vw,185px)}@keyframes appear{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}a{color:var(--accent-deep)}.hidden{display:none!important}.setup{margin-top:6px}.tag{display:inline-block;color:var(--accent-deep);font-size:12px;margin-bottom:8px}.note{font-size:11px;color:var(--muted);line-height:1.6}.toggleline{display:flex;align-items:center;gap:8px;margin:11px 0 3px;font-size:12px;color:var(--muted)}.toggleline input{width:17px;height:17px;accent-color:var(--accent);flex:none}.toggleline span{flex:1}.modebar{display:flex;gap:7px;margin-bottom:9px}.modebar button{padding:9px 5px;font-size:13px;flex:1}.modebar button.active{background:var(--accent);color:white}.stats{display:flex;align-items:center;justify-content:center;gap:16px;margin:4px 0 2px}.stat{text-align:center;flex:1}.statlabel{font-size:11px;color:var(--muted)}.statvalue{font-size:26px;font-weight:780;margin-top:2px}.statdivider{width:1px;height:32px;background:var(--line)}.actionrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}.actionrow button{font-size:13px;padding:12px 4px}.answer-actions{position:relative;margin-top:10px}.answer-actions .row button{padding:12px 5px}.hint{font-size:11px;color:var(--muted);margin:5px 0 8px}.brand{display:inline-flex;align-items:center;gap:6px}.tiny{font-size:11px}.fold{margin-top:14px}.fold summary{cursor:pointer;color:var(--accent-deep);font-weight:650;font-size:13px}.fold[open] summary{margin-bottom:10px}#feedback{font-weight:650}#playStatus{min-height:17px}@media(min-width:700px){body{padding-top:30px}.card{padding:19px}}
+</style></head><body><main class="wrap"><header><h1>猜歌練習機 🎧</h1><div class="subtitle">聽一點點，就猜出那首歌。 ♫</div></header>
+<section class="card" id="gameTop"><div class="modebar"><button id="challenge" type="button">🔥 1 秒挑戰</button><button id="practice" type="button">🎧 自由練習</button></div><div class="stats"><div class="stat"><div class="statlabel">目前片段</div><div id="duration" class="statvalue">10 秒</div></div><div class="statdivider"></div><div class="stat"><div class="statlabel">已答對</div><div id="score" class="statvalue">0</div></div></div><div class="progress"><div id="progress"></div></div><div class="actionrow"><button id="play" class="primary" disabled>▶ 播放</button><button id="more" disabled>＋5 秒</button><button id="skip" disabled>看答案</button></div><div class="status muted" id="playStatus">載入後開始猜歌 🎶</div></section>
+<section class="card reveal-card hidden" id="answer"><div class="answer"><img id="cover" alt="專輯封面"><div id="song" style="font-weight:750;font-size:19px"></div><div class="small muted" id="album" style="margin-top:5px"></div><div class="small" style="margin-top:8px"><a id="store" target="_blank" rel="noopener">查看歌曲來源 ↗</a></div></div></section>
+<section class="card" id="answerCard"><div style="font-weight:750">猜猜歌名 ♡</div><div class="hint">輸入關鍵字後才會出現候選歌名。</div><input id="search" type="text" placeholder="搜尋歌名…" autocomplete="off" spellcheck="false" disabled><div id="choices" class="choices"></div><div class="answer-actions"><div class="row"><button id="submit" class="primary" disabled>提交答案</button><button id="next" disabled>下一題 ↻</button></div></div><div id="feedback" class="status"></div></section>
+<section class="card"><label class="toggleline"><input type="checkbox" id="sameVersions" checked><span>日文／韓文版本視為同一首歌</span></label><details class="fold" id="settings"><summary>⚙️ 音源設定・更換團體</summary><div class="small muted">貼上 Cloudflare Worker 網址。BTS 自動合併多批歌曲；&TEAM、TXT 維持原本的載入方式。</div><div class="setup row" style="margin-top:9px"><input id="endpoint" type="url" placeholder="https://…workers.dev/bts"><button id="load" class="primary" style="flex:0 0 70px">載入</button></div><div id="status" class="status muted">尚未載入音源。</div></details><div id="miniStatus" class="status muted" aria-live="polite">尚未載入音源。</div></section>
+<p class="note">試聽片段由設定的音源服務提供；本站不儲存歌曲音檔。</p><audio id="audio" preload="metadata"></audio></main>
+<script>
+'use strict';const $=id=>document.getElementById(id);const audio=$('audio');let songs=[],current=null,secs=10,done=0,selected=null,answered=false,timer=null,run=0,history=[],mode='practice';
+function msg(t){$('status').textContent=t;$('miniStatus').textContent=t}function stop(){clearTimeout(timer);audio.pause()}function normalize(s){return String(s||'').normalize('NFKC').toLocaleLowerCase().replace(/\s+/g,'').trim()}function title(s){return String(s.title||s.trackName||'')}
+// Only remove explicit Japanese/Korean version labels, not Live / Remix / Instrumental.
+function sameSongKey(name){
+  return normalize(String(name||'')
+    .replace(/[（(]\s*(?:japanese|korean|jp|kr|jpn|kor|日本語|韓国語|日本語版|韓国語版|日文版|韓文版)\s*(?:ver\.?|version|バージョン|版)?\s*[）)]/gi,'')
+    .replace(/\s*[-–—]\s*(?:japanese|korean|jp|kr)\s*(?:ver\.?|version)\s*[-–—]?\s*$/gi,'')
+    .replace(/\s*[（(]\s*(?:ver\.?\s*)?(?:japanese|korean)\s*[）)]/gi,''));
+}
+function isCorrectAnswer(choice, target){
+  if(normalize(title(choice))===normalize(title(target)))return true;
+  return $('sameVersions').checked && sameSongKey(title(choice))===sameSongKey(title(target));
+}function resetRound(){stop();run++;selected=null;answered=false;secs=mode==='practice'?10:1;$('duration').textContent=secs+' 秒';$('progress').style.width=(secs/(mode==='practice'?25:10)*100)+'%';$('more').textContent=mode==='practice'?'＋5 秒':'＋1 秒';$('search').value='';$('search').disabled=false;$('submit').disabled=true;$('next').disabled=true;$('more').disabled=false;$('play').disabled=false;$('skip').disabled=false;$('answer').classList.add('hidden');$('feedback').textContent='';$('playStatus').textContent=mode==='practice'?'準備好了，先聽 10 秒 🎶':'準備好了，播放第一秒！';drawChoices();requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'smooth'}))}
+function next(){if(!songs.length)return;let pool=songs.filter(x=>!history.includes(x.id));if(!pool.length){history=[];pool=[...songs]}current=pool[Math.floor(Math.random()*pool.length)];history.push(current.id);audio.src=current.previewUrl;audio.load();resetRound()}
+function drawChoices(){const needle=normalize($('search').value);$('choices').replaceChildren();if(!needle||answered||selected)return;const filtered=songs.filter(s=>normalize(title(s)).includes(needle)).slice(0,6);for(const item of filtered){const b=document.createElement('button');b.className='choice'+(selected?.id===item.id?' selected':'');b.textContent=title(item);b.disabled=answered;b.onclick=()=>{selected=item;$('search').value=title(item);$('submit').disabled=false;drawChoices();$('search').blur()};$('choices').appendChild(b)}if(!filtered.length){$('choices').textContent='找不到符合的歌名'}}
+function reveal(correct){stop();answered=true;$('answer').classList.remove('hidden');$('song').textContent=title(current);$('album').textContent=current.album||'';$('cover').src=current.artwork||'';$('store').href=current.storeUrl||'https://music.apple.com/';$('feedback').textContent=correct===null?'答案是：'+title(current):correct?'🎉 答對！':'答案是：'+title(current);if(correct){done++;$('score').textContent=done}$('next').disabled=false;$('play').disabled=true;$('more').disabled=true;$('skip').disabled=true;$('search').disabled=true;$('submit').disabled=true;drawChoices()}
+async function play(){if(!current||answered)return;stop();const thisRun=run;try{if(audio.readyState<1){await new Promise((resolve,reject)=>{let waitTimer;const ok=()=>{cleanup();resolve()},bad=()=>{cleanup();reject(Error('音源無法載入'))},cleanup=()=>{clearTimeout(waitTimer);audio.removeEventListener('loadedmetadata',ok);audio.removeEventListener('error',bad)};audio.addEventListener('loadedmetadata',ok,{once:true});audio.addEventListener('error',bad,{once:true});waitTimer=setTimeout(()=>{cleanup();reject(Error('音源逾時'))},10000)})}if(thisRun!==run)return;const max=Math.max(0,(audio.duration||30)-25.3);const position=current._start??(current._start=Math.random()*max);audio.currentTime=position;await audio.play();$('playStatus').textContent=`正在播放 ${secs} 秒…`;timer=setTimeout(()=>{audio.pause();$('playStatus').textContent='還想再聽嗎？可以增加時間 👀'},secs*1000)}catch(err){$('playStatus').textContent='音源播放失敗：'+err.message}}
+// Normal groups: same single request as before. BTS: combine up to five 20-album batches.
+$('load').onclick=async()=>{
+  const entered=$('endpoint').value.trim().replace(/\/+$/,'');
+  if(!/^https:\/\//.test(entered)){msg('請先貼入 https:// 開頭的服務網址');return;}
+  $('load').disabled=true;
+  msg('正在讀取歌曲…');
+  try{
+    const parsed=new URL(entered);
+    // Accept both /bts and /bts/songs as the entry point.
+    let route=parsed.pathname.replace(/\/+$/,'');
+    if(!route || route==='/')route='/songs';else if(!route.endsWith('/songs'))route+='/songs';
+    const isBTS=/^\/bts\/songs$/i.test(route);
+    const apiBase=parsed.origin+route;
+    const all=[];
+    let partial=false;
+    const rounds=isBTS?5:1;
+    for(let batch=0;batch<rounds;batch++){
+      const endpoint=isBTS?apiBase+'?batch='+batch:apiBase;
+      let raw;
+      try{
+        const res=await fetch(endpoint,{cache:'no-store'});
+        if(!res.ok)throw Error('服務回應 '+res.status);
+        raw=await res.json();
+        if(raw.error)throw Error(raw.error);
+      }catch(err){
+        if(batch===0)throw err;
+        partial=true;
+        break;
+      }
+      const items=Array.isArray(raw)?raw:raw.songs;
+      if(!Array.isArray(items))throw Error('題庫格式錯誤');
+      all.push(...items);
+      if(!isBTS)break;
+      msg(`BTS 正在合併題庫：第 ${batch+1} 批，已取得 ${all.length} 筆…`);
+      if(!raw.moreBatches)break;
+      if(batch===rounds-1)partial=true;
+    }
+    const dedup=new Map();
+    for(const [i,item] of all.entries()){
+      if(!item.previewUrl||!title(item))continue;
+      const key=normalize(title(item));
+      if(!dedup.has(key))dedup.set(key,{...item,id:item.id||String(i),title:title(item)});
+    }
+    const updated=[...dedup.values()];
+    if(!updated.length)throw Error('沒有可播的歌曲');
+    songs=updated;
+    msg(`載入 ${songs.length} 首歌曲！`+(partial?'（部分批次尚未載入）':''));
+    try{localStorage.setItem('guess_song_endpoint',entered)}catch{}
+    done=0;history=[];$('score').textContent='0';next();
+  }catch(err){msg('載入失敗：'+err.message)}
+  finally{$('load').disabled=false}
+};
+$('play').onclick=play;
+function setMode(value){mode=value==='challenge'?'challenge':'practice';$('practice').className=mode==='practice'?'active':'';$('challenge').className=mode==='challenge'?'active':'';if(current)resetRound();try{localStorage.setItem('guess_song_mode',mode)}catch{}}
+$('practice').onclick=()=>setMode('practice');$('challenge').onclick=()=>setMode('challenge');
+$('more').onclick=()=>{const limit=mode==='practice'?25:10;secs=Math.min(limit,secs+(mode==='practice'?5:1));$('duration').textContent=secs+' 秒';$('progress').style.width=(secs/(mode==='practice'?25:10)*100)+'%';$('more').disabled=secs>=limit;$('playStatus').textContent='已增加到 '+secs+' 秒，按播放重聽同一段'};$('skip').onclick=()=>reveal(null);$('search').oninput=()=>{selected=null;$('submit').disabled=true;drawChoices()};$('submit').onclick=()=>{if(selected)reveal(isCorrectAnswer(selected,current))};$('sameVersions').onchange=()=>{try{localStorage.setItem('guess_song_same_versions',$('sameVersions').checked?'yes':'no')}catch{}};
+try{$('sameVersions').checked=localStorage.getItem('guess_song_same_versions')!=='no'}catch{}
+try{
+  $('next').onclick=next;const saved=localStorage.getItem('guess_song_endpoint')||localStorage.getItem('andteam_endpoint')||'';
+  $('endpoint').value=saved;
+  setMode(localStorage.getItem('guess_song_mode')||localStorage.getItem('andteam_mode')||'practice');
+  if(saved) $('load').click();
+}catch{setMode('practice')}
+</script></body></html>
